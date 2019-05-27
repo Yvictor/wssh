@@ -7,7 +7,7 @@ if __name__ == '__main__':
     import sys
     import argparse
     import getpass
-    import urllib2
+    from urllib.parse import quote
 
     parser = argparse.ArgumentParser(
         description='wssh - SSH Over WebSockets Client')
@@ -97,20 +97,21 @@ if __name__ == '__main__':
     }
 
     # Filter empty parameters
-    params = dict(filter(lambda (k, v): v is not None, params.iteritems()))
+    #params = dict(filter(lambda (k, v): v is not None, params.iteritems()))
+    params = {k: v for k, v in params.items() if v is not None}
 
     endpoint = 'ws://{serv_host}:{serv_port}/wssh/{host}/{user}?{params}' \
         .format(
             serv_host=args.host,
             serv_port=args.port,
-            host=urllib2.quote(hostname),
-            user=urllib2.quote(username),
-            params='&'.join(['{0}={1}'.format(k, urllib2.quote(v))
-            for (k, v) in params.iteritems()]))
+            host=quote(hostname),
+            user=quote(username),
+            params='&'.join(['{0}={1}'.format(k, quote(v))
+            for (k, v) in params.items()]))
 
     try:
         client.invoke_shell(endpoint)
     except client.ConnectionError as e:
-        print >>sys.stderr, 'wssh: {0}'.format(e.message or 'Connection error')
+        print('wssh: {0}'.format(e.message or 'Connection error'), file=sys.stderr)
     else:
-        print >>sys.stderr, 'Connection to {0} closed.'.format(hostname)
+        print('Connection to {0} closed.'.format(hostname), file=sys.stderr)
